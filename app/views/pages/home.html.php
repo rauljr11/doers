@@ -307,7 +307,7 @@
 			}
 
 			$.ajax({
-				url: '/users/checklogin/'+$('#email', logForm).val()+'/'+$('#password', logForm).val(),
+				url: '/users/checklogin/'+$('#username', logForm).val()+'/'+$('#password', logForm).val(),
 				type: 'GET',
 				success: function (data) {
 					var res = JSON.parse(data);

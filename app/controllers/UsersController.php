@@ -26,8 +26,11 @@ namespace app\controllers;
 
 use app\models\Users;
 use lithium\security\Auth;
+use lithium\storage\Session;
 
 class UsersController extends \lithium\action\Controller {
+
+	private $_userSessionKey = 'user_hash_key';
 
 	public function create() {
 
@@ -84,14 +87,16 @@ class UsersController extends \lithium\action\Controller {
 	}
 
 	public function checklogin () {
+
 		$user = Users::find('first', [
 				'conditions' => [
-					'email' => $this->request->args[0],
+					'username' => $this->request->args[0],
 					'password' => md5($this->request->args[1])
 				]
 			]);
 
 		if ($user) {
+			$this->setSession($user);
 			echo json_encode([
 					'status' => 'passed',
 				]);
@@ -104,15 +109,44 @@ class UsersController extends \lithium\action\Controller {
 	}
 
 	public function login () {
+
 		$user = Users::find('first', [
-				'conditions' => [
-					'email' => $this->request->data['username'],
-					'password' => md5($this->request->data['password'])
+			'conditions' => [
+				'username' => $this->request->data['username'],
+				'password' => md5($this->request->data['password'])
+			]
+		]);
+
+		if (!$this->checkSession($user)) {
+			$this->redirect(['Pages::view']);
+		} else {
+			$this->render([
+				'template' => 'dashboard',
+				'data' => [
+					'user' => $user
 				]
 			]);
-
-		if ($user) {
-			Auth::set('users', $user);
 		}
+	}
+
+	public function logout () {
+		// Auth::clear('users');
+		$this->deleteSession();
+        return $this->redirect(['Pages::view']);
+	}
+
+	private function setSession ($user) {
+		$hash = base64_encode($user->id . "-" . $user->email);
+		Session::write($this->_userSessionKey, $hash);
+	}
+
+	private function checkSession ($user) {
+		$hashed = base64_decode(Session::read($this->_userSessionKey));
+		$parts = explode("-",$hashed);
+		return ($user->id == $parts[0] && $user->email == $parts[1]);
+	}
+
+	private function deleteSession () {
+		Session::delete($this->_userSessionKey);
 	}
 }

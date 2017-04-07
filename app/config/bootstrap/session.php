@@ -13,12 +13,38 @@
  * special characters you might want to use Inflector::slug() or set this manually.
  */
 use lithium\storage\Session;
+use lithium\security\Auth;
 
 $name = basename(LITHIUM_APP_PATH);
 Session::config(array(
 	// 'cookie' => array('adapter' => 'Cookie', 'name' => $name),
 	'default' => array('adapter' => 'Php', 'session.name' => $name)
 ));
+
+use lithium\security\Password;
+
+$GLOBALS['hashPasswordFunction'] = function($self, $params, $chain) {
+
+	if ($params['data']) {
+		$oldPass = $params['entity']->password;
+
+		if (isset($params['data']['current_password'])) {
+			if (!Password::check($params['data']['current_password'], $oldPass)) {
+				unset($params['data']['password']);
+				return $chain->next($self, $params, $chain);
+			}
+		}
+
+		$params['entity']->set($params['data']);
+		$params['data'] = array();
+	}
+
+	if ((!$params['entity']->exists() && $params['entity']->password != "") || ($params['entity']->exists() && isset($oldPass) && $params['entity']->password != $oldPass)) {
+		$params['entity']->password = Password::hash($params['entity']->password);
+	}
+
+	return $chain->next($self, $params, $chain);
+};
 
 /**
  * Uncomment the lines below to enable forms-based authentication. This configuration will attempt
@@ -47,5 +73,13 @@ Session::config(array(
 // 		'fields' => array('username', 'password')
 // 	)
 // ));
+
+Auth::config(array(
+	'users' => array(
+		'adapter' => 'Form',
+		'model' => 'Users',
+		'fields' => array('username', 'password'),
+	),
+));
 
 ?>

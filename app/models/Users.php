@@ -11,5 +11,6 @@ class Users extends \lithium\data\Model {
         'username' => 'string',
         'password' => 'string'
     ];
-    
 }
+
+// Users::applyFilter('save', $GLOBALS['hashPasswordFunction']);
