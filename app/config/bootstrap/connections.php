@@ -64,7 +64,7 @@ Connections::add('default', array(
 	'adapter' => 'MySql',
 	'host' => 'localhost',
 	'login' => 'root',
-	'password' => 'gfKd51*9Jr',
+	'password' => 'abc1232016',
 	'database' => 'dbuser_doers',
 	'encoding' => 'UTF-8'
 ));
